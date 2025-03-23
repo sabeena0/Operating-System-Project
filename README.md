@@ -1,26 +1,26 @@
-Resource Allocation Graph Simulator
+# **Resource Allocation Graph Simulator**
 A graphical tool to simulate resource allocation graphs (RAG) and analyze deadlock scenarios interactively. This project includes a Python Flask backend and a frontend built with HTML, CSS, and JavaScript.
 
-Features
+## **Features**
 Visualize Processes and Resources:
 
 Processes are represented as light blue rectangles with black text.
 
 Resources are represented as light green rectangles with black text.
 
-Directed Edges:
+## **Directed Edges:**
 
 Edges represent allocations between processes and resources.
 
 Arrowheads clearly indicate the direction of the allocation.
 
-Deadlock Detection:
+## **Deadlock Detection:**
 
 Check for deadlocks in the resource allocation graph.
 
 The backend uses a cycle detection algorithm to identify deadlocks.
 
-Interactive Controls:
+## **Interactive Controls:**
 
 Add processes and resources.
 
@@ -28,26 +28,26 @@ Create allocations between processes and resources.
 
 Undo actions or restart the graph.
 
-Screenshots:
+## **Screenshots:**
 Example of a resource allocation graph with processes, resources, and directed edges.
 ![image](https://github.com/user-attachments/assets/41fc93a2-3e87-4458-98e7-aa670b4f8247)
 ![image](https://github.com/user-attachments/assets/f31ca845-737a-4029-8f49-86d30ff72c2b)
 
 
-Technologies Used
+## **Technologies Used**
 Frontend:
 
 HTML, CSS, JavaScript
 
 SVG for graph visualization
 
-Backend:
+## **Backend:**
 
 Python Flask
 
 Deadlock detection using cycle detection in graphs
 
-How to Run the Project
+# **How to Run the Project**
 Prerequisites
 Python 3.x: Ensure Python is installed on your system.
 
@@ -65,7 +65,7 @@ bash
 Copy
 git clone https://github.com/your-username/resource-allocation-graph-simulator.git
 cd resource-allocation-graph-simulator
-Run the Backend:
+### **Run the Backend:**
 
 Start the Flask server by running:
 
@@ -74,13 +74,13 @@ Copy
 python app.py
 The backend will start at http://127.0.0.1:5000.
 
-Open the Frontend:
+### **Open the Frontend:**
 
 Open the index.html file in your browser.
 
 Alternatively, you can use a local server (e.g., VS Code Live Server) to serve the frontend.
 
-Interact with the Simulator:
+## **Interact with the Simulator:**
 
 Add processes and resources using the input fields.
 
@@ -88,7 +88,7 @@ Create allocations by specifying the "From" and "To" nodes.
 
 Click "Check Deadlock" to analyze the graph for deadlocks.
 
-Project Structure
+## **Project Structure**
 Copy
 resource-allocation-graph-simulator/
 ├── app.py                  # Flask backend for deadlock detection
