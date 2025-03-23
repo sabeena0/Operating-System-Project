@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Allocation Graph Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            margin: 20px 0;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        .graph-container, .controls {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .graph-container {
+            width: 60%;
+        }
+        .controls {
+            width: 30%;
+        }
+        .node {
+            display: inline-block;
+            padding: 10px;
+            margin: 10px;
+            border: 2px solid blueviolet;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .process {
+            background-color: #a8d5e2;
+        }
+        .resource {
+            background-color: #f4a261;
+        }
+        .edge {
+            stroke: #000;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .undo-restart {
+            display: flex;
+            gap: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Resource Allocation Graph Simulator</h1>
+    <div class="container">
+        <div class="graph-container">
+            <h2>Graph Visualization</h2>
+            <svg id="graph-svg" width="600" height="400">
+                <!-- Define arrowhead marker -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#000" />
+                    </marker>
+                </defs>
+            </svg>
+            <div class="result" id="result"></div>
+        </div>
+        <div class="controls">
+            <h2>Controls</h2>
+            <div>
+                <label for="process">Process:</label>
+                <input type="text" id="process" placeholder="P1">
+                <button onclick="addProcess()">Add Process</button>
+            </div>
+            <div>
+                <label for="resource">Resource:</label>
+                <input type="text" id="resource" placeholder="R1">
+                <button onclick="addResource()">Add Resource</button>
+            </div>
+            <div>
+                <label for="from">From:</label>
+                <input type="text" id="from" placeholder="P1">
+                <label for="to">To:</label>
+                <input type="text" id="to" placeholder="R1">
+                <button onclick="addEdge()">Add Edge</button>
+            </div>
+            <div class="undo-restart">
+                <button onclick="undoLastAction()">Undo</button>
+                <button onclick="restartGraph()">Restart</button>
+            </div>
+            <button onclick="checkDeadlock()">Check Deadlock</button>
+        </div>
+    </div>
+
+    <script>
+        const svg = document.getElementById('graph-svg');
+        const resultDiv = document.getElementById('result');
+        let processes = [];
+        let resources = [];
+        let edges = [];
+        let actionHistory = [];
+
+        // Backend URL
+        const backendUrl = 'http://127.0.0.1:5000';
+
+        // Add a process
+        function addProcess() {
+            const process = document.getElementById('process').value;
+            if (process && !processes.includes(process)) {
+                processes.push(process);
+                actionHistory.push({ type: 'process', value: process });
+                updateBackendGraph();
+                renderGraph();
+            }
+        }
+
+        // Add a resource
+        function addResource() {
+            const resource = document.getElementById('resource').value;
+            if (resource && !resources.includes(resource)) {
+                resources.push(resource);
+                actionHistory.push({ type: 'resource', value: resource });
+                updateBackendGraph();
+                renderGraph();
+            }
+        }
+
+        // Add an edge
+        function addEdge() {
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            if (from && to) {
+                edges.push({ from, to });
+                actionHistory.push({ type: 'edge', value: { from, to } });
+                updateBackendGraph();
+                renderGraph();
+            }
+        }
+
+        // Undo the last action
+        function undoLastAction() {
+            if (actionHistory.length > 0) {
+                const lastAction = actionHistory.pop();
+                if (lastAction.type === 'process') {
+                    processes = processes.filter(p => p !== lastAction.value);
+                } else if (lastAction.type === 'resource') {
+                    resources = resources.filter(r => r !== lastAction.value);
+                } else if (lastAction.type === 'edge') {
+                    edges = edges.filter(e => e.from !== lastAction.value.from || e.to !== lastAction.value.to);
+                }
+                updateBackendGraph();
+                renderGraph();
+            }
+        }
+
+        // Restart the graph
+        function restartGraph() {
+            processes = [];
+            resources = [];
+            edges = [];
+            actionHistory = [];
+            updateBackendGraph();
+            renderGraph();
+        }
+
+        // Render the graph
+        function renderGraph() {
+            svg.innerHTML = `
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#000" />
+                    </marker>
+                </defs>
+            `;
+
+            // Render processes
+            processes.forEach((p, i) => {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', 50 + i * 120);
+                rect.setAttribute('y', 50);
+                rect.setAttribute('width', 60);
+                rect.setAttribute('height', 40);
+                rect.setAttribute('class', 'node process');
+                svg.appendChild(rect);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', 80 + i * 120);
+                text.setAttribute('y', 100);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dy', '.3em');
+                text.textContent = p;
+                svg.appendChild(text);
+            });
+
+            // Render resources
+            resources.forEach((r, i) => {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', 50 + i * 120);
+                rect.setAttribute('y', 150);
+                rect.setAttribute('width', 60);
+                rect.setAttribute('height', 40);
+                rect.setAttribute('class', 'node resource');
+                svg.appendChild(rect);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', 80 + i * 120);
+                text.setAttribute('y', 200);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dy', '.3em');
+                text.textContent = r;
+                svg.appendChild(text);
+            });
+
+            // Render edges as arrows
+            edges.forEach(edge => {
+                const fromNode = processes.includes(edge.from) ? processes.indexOf(edge.from) : resources.indexOf(edge.from);
+                const toNode = processes.includes(edge.to) ? processes.indexOf(edge.to) : resources.indexOf(edge.to);
+
+                // Calculate start and end points with a small gap
+                const startX = 80 + fromNode * 120;
+                const startY = processes.includes(edge.from) ? 90 : 170;
+                const endX = 80 + toNode * 120;
+                const endY = processes.includes(edge.to) ? 90 : 170;
+
+                // Adjust start and end points to create a gap
+                const gap = 20; // Gap size
+                const dx = endX - startX;
+                const dy = endY - startY;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const offsetX = (dx / length) * gap;
+                const offsetY = (dy / length) * gap;
+
+                const adjustedStartX = startX + offsetX;
+                const adjustedStartY = startY + offsetY;
+                const adjustedEndX = endX - offsetX;
+                const adjustedEndY = endY - offsetY;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', adjustedStartX);
+                line.setAttribute('y1', adjustedStartY);
+                line.setAttribute('x2', adjustedEndX);
+                line.setAttribute('y2', adjustedEndY);
+                line.setAttribute('class', 'edge');
+                svg.appendChild(line);
+            });
+        }
+
+        // Update the backend with the current graph
+        async function updateBackendGraph() {
+            await fetch(`${backendUrl}/api/graph`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ processes, resources, edges })
+            });
+        }
+
+        // Check for deadlock
+        async function checkDeadlock() {
+            const response = await fetch(`${backendUrl}/api/check-deadlock`);
+            const result = await response.json();
+            resultDiv.textContent = result.deadlock ? "Deadlock detected!" : "No deadlock detected.";
+            resultDiv.style.color = result.deadlock ? "red" : "green";
+        }
+
+        // Initial render
+        renderGraph();
+    </script>
+</body>
+</html>
