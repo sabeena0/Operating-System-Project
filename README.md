@@ -28,8 +28,9 @@ Undo actions or restart the graph.
 
 # **Screenshots:**
 Example of a resource allocation graph with processes, resources, and directed edges.
-![image](https://github.com/user-attachments/assets/41fc93a2-3e87-4458-98e7-aa670b4f8247)
-![image](https://github.com/user-attachments/assets/f31ca845-737a-4029-8f49-86d30ff72c2b)
+![image](https://github.com/user-attachments/assets/a99c92e1-b417-4d09-a94b-4b3b40367563)
+![image](https://github.com/user-attachments/assets/a08af142-af92-416b-be75-f62117261b04)
+
 
 
 # **Technologies Used**
